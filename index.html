@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>내 PC 얼마일까?</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div class="container">
+            <h1>내 PC 얼마일까? 🖥️</h1>
+            <p class="subtitle">스펙을 입력하면 중고 시세를 알려드려요</p>
+
+            <div class="form">
+                <div class="input-group">
+                    <label>CPU 모델명</label>
+                    <input type="text" id="cpu" placeholder="예: i5-10400, 라이젠5 5600" />
+                </div>
+                <div class="input-group">
+                    <label>RAM 용량</label>
+                    <input type="text" id="ram" placeholder="예: 16GB, 8GB" />
+                </div>
+                <div class="input-group">
+                    <label>GPU 모델명</label>
+                    <input type="text" id="gpu" placeholder="예: RTX 3060, GTX 1660 (없으면 내장그래픽)" />
+                </div>
+                <div class="input-group">
+                    <label>저장장치</label>
+                    <input type="text" id="storage" placeholder="예: SSD 512GB, HDD 1TB" />
+                </div>
+                <div class="input-group">
+                    <label>제조연도</label>
+                    <input type="text" id="year" placeholder="예: 2020년" />
+                </div>
+
+                <button id="btn" onclick="estimate()">가격 알아보기</button>
+            </div>
+
+            <div class="result" id="result" style="display: none">
+                <h2>예상 시세</h2>
+                <div id="result-text"></div>
+                <div class="contact">
+                    <p>💬 직접 팔고 싶으신가요?</p>
+                    <a href="mailto:your@email.com">수거 문의하기</a>
+                </div>
+            </div>
+        </div>
+        <script src="script.js"></script>
+    </body>
+</html>
