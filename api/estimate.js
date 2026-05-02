@@ -52,8 +52,18 @@ export default async function handler(req, res) {
         });
 
         const data = await response.json();
-        const text = data.content[0].text;
 
+        console.log('Claude API 응답:', JSON.stringify(data));
+
+        if (!data.content || !data.content[0]) {
+            console.error('API 오류:', data);
+            return res.status(500).json({
+                error: 'API 응답 오류',
+                detail: JSON.stringify(data),
+            });
+        }
+
+        const text = data.content[0].text;
         return res.status(200).json({ result: text });
     } catch (error) {
         console.error('Error:', error);
