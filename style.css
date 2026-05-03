@@ -347,3 +347,31 @@ h1 {
 .hidden {
     display: none !important;
 }
+#result-text h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 16px 0 8px;
+}
+
+#result-text h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 12px 0 6px;
+}
+
+#result-text ul {
+    padding-left: 20px;
+    margin: 6px 0;
+}
+
+#result-text li {
+    margin-bottom: 4px;
+    line-height: 1.7;
+}
+
+#result-text strong {
+    font-weight: 600;
+    color: #1a1a1a;
+}

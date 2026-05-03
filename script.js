@@ -300,7 +300,15 @@ async function estimate() {
 
         const data = await response.json();
 
-        document.getElementById('result-text').textContent = data.result;
+        document.getElementById('result-text').innerHTML = data.result
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/## (.+)/g, '<h3>$1</h3>')
+            .replace(/# (.+)/g, '<h2>$1</h2>')
+            .replace(/^- (.+)/gm, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+            .replace(/\n\n/g, '<br><br>')
+            .replace(/\n/g, '<br>');
+
         document.getElementById('result').classList.remove('hidden');
         document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
     } catch (error) {
