@@ -20,7 +20,7 @@ async function crawlCategory(category) {
 
     while (true) {
         try {
-            const startNum = (page - 1) * 60;
+            const startNum = (page - 1) * 100;
 
             const params = new URLSearchParams({
                 actype: 'getList',
@@ -31,7 +31,7 @@ async function crawlCategory(category) {
                 MediumDivNo: category.mediumDivNo,
                 DivNo: category.divNo,
 
-                PageCount: '60',
+                PageCount: '100',
                 StartNum: String(startNum),
                 PageNum: String(page),
                 PreOrder: 'sale_order',
@@ -51,7 +51,7 @@ async function crawlCategory(category) {
                 OAuthCertChk: '0',
                 PageType: 'ProductList',
                 splist_kw: '',
-                select_page_cnt: '60',
+                select_page_cnt: '100',
                 BottomQuery: '',
             });
 
@@ -141,28 +141,23 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const ipCheck = await fetch('https://api.ipify.org?format=json');
-    const ipData = await ipCheck.json();
-    console.log('Vercel 서버 IP:', ipData.ip);
-
     const cookie = process.env.COMPUZONE_COOKIE || '';
-    console.log('쿠키 길이:', cookie.length);
-
     if (!cookie) {
         return res.status(500).json({ error: '쿠키가 설정되지 않았습니다' });
     }
 
-    console.log('크롤링 시작...');
-    const results = [];
+    const { categoryName } = req.body;
 
-    for (const category of CATEGORIES) {
-        await crawlCategory(category);
-        results.push(category.name);
-        await new Promise((r) => setTimeout(r, 2000));
+    const category = categoryName ? CATEGORIES.find((c) => c.name === categoryName) : CATEGORIES[0];
+
+    if (!category) {
+        return res.status(400).json({ error: '카테고리를 찾을 수 없습니다' });
     }
 
+    console.log(`${category.name} 크롤링 시작...`);
+    await crawlCategory(category);
+
     return res.status(200).json({
-        message: '크롤링 완료!',
-        categories: results,
+        message: `${category.name} 크롤링 완료!`,
     });
 }
