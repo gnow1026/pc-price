@@ -37,6 +37,10 @@
             "dest": "/api/search.js"
         },
         {
+            "src": "/api/cleannames",
+            "dest": "/api/cleannames.js"
+        },
+        {
             "src": "/admin",
             "dest": "/admin.html"
         },
