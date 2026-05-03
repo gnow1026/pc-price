@@ -25,15 +25,20 @@ export default async function handler(req, res) {
         // DB에서 관련 부품 시세 가져오기
         const [cpuData, ramData, gpuData, storageData] = await Promise.all([
             supabase.from('parts').select('name, price').eq('category', 'CPU').ilike('name', `%${cpu}%`).limit(3),
-            supabase.from('parts').select('name, price').eq('category', 'RAM').ilike('name', `%${ram}%`).limit(3),
+            supabase.from('parts').select('name, price').eq('category', '메모리').ilike('name', `%${ram}%`).limit(3),
             gpu
-                ? supabase.from('parts').select('name, price').eq('category', 'GPU').ilike('name', `%${gpu}%`).limit(3)
+                ? supabase
+                      .from('parts')
+                      .select('name, price')
+                      .eq('category', '그래픽카드')
+                      .ilike('name', `%${gpu}%`)
+                      .limit(3)
                 : { data: [] },
             storage
                 ? supabase
                       .from('parts')
                       .select('name, price')
-                      .eq('category', 'SSD')
+                      .eq('category', 'HDD/SSD')
                       .ilike('name', `%${storage}%`)
                       .limit(3)
                 : { data: [] },
