@@ -89,6 +89,17 @@ function cleanName(name) {
                 /\s*(하스웰|커피레이크R?|스카이레이크|카비레이크R?|아이비브릿지|샌디브릿지|랩터레이크R?|엘더레이크|로켓레이크|코멧레이크|애로우레이크|리프레시|리프레쉬)\s*/gi,
                 ' ',
             )
+            // 쿨러 관련 제거
+            .replace(/쿨러\s*미포함/gi, '')
+            .replace(/쿨러\s*포함/gi, '')
+            .replace(/쿨러미포함/gi, '')
+            // A/S 관련 제거
+            .replace(/A\/S\s*[0-9]+\s*개월/gi, '')
+            .replace(/AS\s*[0-9]+\s*개월/gi, '')
+            .replace(/A\/S\s*무상\s*[0-9]+개월/gi, '')
+            // 등급 관련 제거
+            .replace(/[A-Z]급/gi, '')
+            .replace(/B급/gi, '')
             // 불필요한 단어 제거
             .replace(/중고/gi, '')
             .replace(/벌크/gi, '')
@@ -97,6 +108,11 @@ function cleanName(name) {
             .replace(/랜덤\s*발송/gi, '')
             .replace(/랜덤/gi, '')
             .replace(/탈거/gi, '')
+            .replace(/제품/gi, '')
+            .replace(/미사용/gi, '')
+            // 브랜드명 앞에 붙는 불필요한 것들
+            .replace(/인텔\s*코어\s*/gi, '')
+            .replace(/코어\s*/gi, '')
             // 연속 공백 정리
             .replace(/\s+/g, ' ')
             .trim()
