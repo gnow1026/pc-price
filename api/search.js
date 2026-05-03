@@ -84,7 +84,7 @@ export default async function handler(req, res) {
     const { category, brand, series, keyword } = req.body;
 
     try {
-        let query = supabase.from('parts').select('name, price').order('price', { ascending: true });
+        let query = supabase.from('parts').select('name, clean_name, price').order('price', { ascending: true });
 
         if (category) query = query.eq('category', category);
 
@@ -98,7 +98,12 @@ export default async function handler(req, res) {
         const { data, error } = await query.limit(100);
         if (error) throw error;
 
-        return res.status(200).json({ results: data });
+        const results = data.map((item) => ({
+            name: item.clean_name || item.name,
+            price: item.price,
+        }));
+
+        return res.status(200).json({ results });
     } catch (error) {
         console.error('검색 오류:', error);
         return res.status(500).json({ error: '검색 중 오류가 발생했습니다' });
