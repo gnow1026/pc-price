@@ -55,7 +55,12 @@ export default async function handler(req, res) {
 
     try {
         // DB에서 전체 데이터 가져오기
-        const { data: parts, error } = await supabase.from('parts').select('id, name').order('id', { ascending: true });
+        const { category } = req.body;
+
+        let query = supabase.from('parts').select('id, name').order('id', { ascending: true });
+        if (category) query = query.eq('category', category);
+
+        const { data: parts, error } = await query;
 
         if (error) throw error;
 
