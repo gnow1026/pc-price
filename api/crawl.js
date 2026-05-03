@@ -92,6 +92,7 @@ async function crawlCategory(category) {
         }
     } catch (error) {
         console.error(`${category.name} 크롤링 오류:`, error);
+        console.error('스택:', error.stack);
     }
 }
 
