@@ -143,12 +143,18 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: '쿠키가 설정되지 않았습니다' });
     }
 
-    const { categoryName } = req.body;
+    let categoryName;
+    try {
+        const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        categoryName = body?.categoryName;
+    } catch (e) {
+        categoryName = null;
+    }
 
     const category = categoryName ? CATEGORIES.find((c) => c.name === categoryName) : CATEGORIES[0];
 
     if (!category) {
-        return res.status(400).json({ error: '카테고리를 찾을 수 없습니다' });
+        return res.status(400).json({ error: `카테고리를 찾을 수 없습니다: ${categoryName}` });
     }
 
     console.log(`${category.name} 크롤링 시작...`);
