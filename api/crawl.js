@@ -11,7 +11,22 @@ const CATEGORIES = [
     { name: '파워/쿨러', divNo: '2610' },
 ];
 
-async function crawlCategory(category) {
+async function getCookies() {
+    const response = await fetch(
+        'https://www.compuzone.co.kr/product/product_list.htm?BigDivNo=89&MediumDivNo=1126&DivNo=2604',
+        {
+            headers: {
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            },
+        },
+    );
+    const cookies = response.headers.get('set-cookie') || '';
+    console.log('받은 쿠키:', cookies.substring(0, 100));
+    return cookies;
+}
+
+async function crawlCategory(category, cookies) {
     try {
         const params = new URLSearchParams({
             actype: 'getList',
@@ -40,10 +55,13 @@ async function crawlCategory(category) {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 'User-Agent':
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
-                Referer: 'https://www.compuzone.co.kr',
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                Referer: 'https://www.compuzone.co.kr/product/product_list.htm?BigDivNo=89&MediumDivNo=1126&DivNo=2604',
                 Accept: 'text/html, */*; q=0.01',
                 'Accept-Language': 'ko-KR,ko;q=0.9',
+                'X-Requested-With': 'XMLHttpRequest',
+                Origin: 'https://www.compuzone.co.kr',
+                Cookie: cookies,
             },
             body: params.toString(),
         });
@@ -51,7 +69,7 @@ async function crawlCategory(category) {
         const buffer = await response.arrayBuffer();
         const decoder = new TextDecoder('euc-kr');
         const html = decoder.decode(buffer);
-        console.log('HTML 앞부분:', html.substring(0, 500));
+        console.log('HTML 앞부분:', html.substring(0, 200));
 
         const items = [];
         const nameRegex = /class="prd_info_name prdTxt"[^>]*>([^<]+)</g;
@@ -91,8 +109,7 @@ async function crawlCategory(category) {
             console.log(`${category.name}: 저장할 데이터 없음`);
         }
     } catch (error) {
-        console.error(`${category.name} 크롤링 오류:`, error);
-        console.error('스택:', error.stack);
+        console.error(`${category.name} 크롤링 오류:`, error.message);
     }
 }
 
@@ -102,10 +119,12 @@ export default async function handler(req, res) {
     }
 
     console.log('크롤링 시작...');
+
+    const cookies = await getCookies();
     const results = [];
 
     for (const category of CATEGORIES) {
-        await crawlCategory(category);
+        await crawlCategory(category, cookies);
         results.push(category.name);
         await new Promise((resolve) => setTimeout(resolve, 2000));
     }
