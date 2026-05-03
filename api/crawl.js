@@ -106,6 +106,10 @@ async function crawlCategory(category) {
     }
 }
 
+const ipCheck = await fetch('https://api.ipify.org?format=json');
+const ipData = await ipCheck.json();
+console.log('Vercel 서버 IP:', ipData.ip);
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
