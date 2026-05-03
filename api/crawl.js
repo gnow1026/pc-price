@@ -51,6 +51,7 @@ async function crawlCategory(category) {
         const buffer = await response.arrayBuffer();
         const decoder = new TextDecoder('euc-kr');
         const html = decoder.decode(buffer);
+        console.log('HTML 앞부분:', html.substring(0, 500));
 
         const items = [];
         const nameRegex = /class="prd_info_name[^"]*"[^>]*>[\s\S]*?<a[^>]*>([^<]+)<\/a>/g;
