@@ -2,6 +2,21 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SECRET_KEY);
 
+function cleanName(name) {
+    return name
+        .replace(/\[[^\]]{1,30}\]/g, '')
+        .replace(/\([^)]{20,}\)/g, '')
+        .replace(/[◆★●■▶]/g, '')
+        .replace(/[0-9]+세대\s*/g, '')
+        .replace(
+            /\s*(하스웰|커피레이크R?|스카이레이크|카비레이크R?|아이비브릿지|샌디브릿지|랩터레이크R?|엘더레이크|로켓레이크|코멧레이크|애로우레이크)\s*/gi,
+            ' ',
+        )
+        .replace(/\.{2,}/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 const CATEGORIES = [
     { name: 'CPU', divNo: '2604', mediumDivNo: '1126' },
     { name: '메모리', divNo: '2605', mediumDivNo: '1126' },
@@ -106,6 +121,7 @@ async function crawlCategory(category) {
                     items.push({
                         category: category.name,
                         name: names[i],
+                        clean_name: cleanName(names[i]),
                         price: prices[i],
                         updated_at: new Date().toISOString(),
                     });
