@@ -3,12 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SECRET_KEY);
 
 const CATEGORIES = [
-    { name: 'CPU', divNo: '2604' },
-    { name: '메모리', divNo: '2605' },
-    { name: '메인보드', divNo: '2606' },
-    { name: 'HDD/SSD', divNo: '2607' },
-    { name: '그래픽카드', divNo: '2608' },
-    { name: '파워/쿨러', divNo: '2610' },
+    { name: 'CPU', divNo: '2604', mediumDivNo: '1126' },
+    { name: '메모리', divNo: '2605', mediumDivNo: '1126' },
+    { name: '메인보드', divNo: '2606', mediumDivNo: '1126' },
+    { name: 'HDD/SSD', divNo: '2607', mediumDivNo: '1126' },
+    { name: '그래픽카드', divNo: '2608', mediumDivNo: '1126' },
+    { name: '파워/쿨러', divNo: '2610', mediumDivNo: '1126' },
+    { name: '서버/네트워크', divNo: '', mediumDivNo: '1125' },
+    { name: '노트북', divNo: '', mediumDivNo: '1455' },
+    { name: '모니터/프린터', divNo: '', mediumDivNo: '1128' },
 ];
 
 async function crawlCategory(category) {
@@ -25,8 +28,9 @@ async function crawlCategory(category) {
                 orderlayerx: '',
                 orderlayery: '',
                 BigDivNo: '89',
-                MediumDivNo: '1126',
+                MediumDivNo: category.mediumDivNo,
                 DivNo: category.divNo,
+
                 PageCount: '60',
                 StartNum: String(startNum),
                 PageNum: String(page),
@@ -57,7 +61,7 @@ async function crawlCategory(category) {
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                     'User-Agent':
                         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    Referer: `https://www.compuzone.co.kr/product/product_list.htm?BigDivNo=89&MediumDivNo=1126&DivNo=${category.divNo}`,
+                    Referer: `https://www.compuzone.co.kr/product/product_list.htm?BigDivNo=89&MediumDivNo=${category.mediumDivNo}&DivNo=${category.divNo}`,
                     'X-Requested-With': 'XMLHttpRequest',
                     Origin: 'https://www.compuzone.co.kr',
                     Accept: 'text/html, */*; q=0.01',
@@ -98,8 +102,10 @@ async function crawlCategory(category) {
             console.log(`${category.name} 페이지${page}: 이름 ${names.length}개, 가격 ${prices.length}개`);
 
             const items = [];
+            const seenNames = new Set();
             for (let i = 0; i < Math.min(names.length, prices.length); i++) {
-                if (names[i] && prices[i]) {
+                if (names[i] && prices[i] && !seenNames.has(names[i])) {
+                    seenNames.add(names[i]);
                     items.push({
                         category: category.name,
                         name: names[i],
