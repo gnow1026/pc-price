@@ -12,98 +12,122 @@ const CATEGORIES = [
 ];
 
 async function crawlCategory(category) {
-    try {
-        const params = new URLSearchParams({
-            actype: 'getList',
-            SelectProductNo: '',
-            orderlayerx: '',
-            orderlayery: '',
-            BigDivNo: '89',
-            MediumDivNo: '1126',
-            DivNo: category.divNo,
-            PageCount: '60',
-            StartNum: '0',
-            PageNum: '1',
-            PreOrder: 'sale_order',
-            lvm: 'T',
-            hot_keyword: '',
-            left_menu_open: '',
-            ps_po: 'P',
-            DetailBack: '',
-            CompareProductNoList: '',
-            CompareProductDivNo: '',
-            IsProductGroupView: '',
-            ScrollPage: '1',
-            ProductType: 'list',
-            setPricechk: 'N',
-            MD_CopyCategory: 'N',
-            BD_CopyCategory: 'N',
-            OAuthCertChk: '0',
-            PageType: 'ProductList',
-            splist_kw: '',
-            select_page_cnt: '60',
-            BottomQuery: '',
-        });
+    let page = 1;
+    let totalSaved = 0;
 
-        const response = await fetch('https://www.compuzone.co.kr/product/product_list.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                'User-Agent':
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                Referer: `https://www.compuzone.co.kr/product/product_list.htm?BigDivNo=89&MediumDivNo=1126&DivNo=${category.divNo}`,
-                'X-Requested-With': 'XMLHttpRequest',
-                Origin: 'https://www.compuzone.co.kr',
-                Accept: 'text/html, */*; q=0.01',
-                'Accept-Language': 'ko-KR,ko;q=0.9',
-                Cookie: process.env.COMPUZONE_COOKIE || '',
-            },
-            body: params.toString(),
-        });
-        console.log(`${category.name} 상태코드:`, response.status, response.headers.get('content-type'));
-        const buffer = await response.arrayBuffer();
-        const decoder = new TextDecoder('euc-kr');
-        const html = decoder.decode(buffer);
-        console.log(`${category.name} HTML:`, html.substring(0, 150));
+    while (true) {
+        try {
+            const startNum = (page - 1) * 60;
 
-        const names = [];
-        const prices = [];
-        const nameRegex = /class="prd_info_name prdTxt"[^>]*>([^<]+)</g;
-        const priceRegex = /data-price="([\d,]+)"/g;
+            const params = new URLSearchParams({
+                actype: 'getList',
+                SelectProductNo: '',
+                orderlayerx: '',
+                orderlayery: '',
+                BigDivNo: '89',
+                MediumDivNo: '1126',
+                DivNo: category.divNo,
+                PageCount: '60',
+                StartNum: String(startNum),
+                PageNum: String(page),
+                PreOrder: 'sale_order',
+                lvm: 'T',
+                hot_keyword: '',
+                left_menu_open: '',
+                ps_po: 'P',
+                DetailBack: '',
+                CompareProductNoList: '',
+                CompareProductDivNo: '',
+                IsProductGroupView: '',
+                ScrollPage: String(page),
+                ProductType: 'list',
+                setPricechk: 'N',
+                MD_CopyCategory: 'N',
+                BD_CopyCategory: 'N',
+                OAuthCertChk: '0',
+                PageType: 'ProductList',
+                splist_kw: '',
+                select_page_cnt: '60',
+                BottomQuery: '',
+            });
 
-        let match;
-        while ((match = nameRegex.exec(html)) !== null) {
-            const name = match[1].trim();
-            if (name) names.push(name);
-        }
-        while ((match = priceRegex.exec(html)) !== null) {
-            prices.push(parseInt(match[1].replace(/,/g, '')));
-        }
+            const response = await fetch('https://www.compuzone.co.kr/product/product_list.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'User-Agent':
+                        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    Referer: `https://www.compuzone.co.kr/product/product_list.htm?BigDivNo=89&MediumDivNo=1126&DivNo=${category.divNo}`,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    Origin: 'https://www.compuzone.co.kr',
+                    Accept: 'text/html, */*; q=0.01',
+                    'Accept-Language': 'ko-KR,ko;q=0.9',
+                    Cookie: process.env.COMPUZONE_COOKIE || '',
+                },
+                body: params.toString(),
+            });
 
-        console.log(`${category.name}: 이름 ${names.length}개, 가격 ${prices.length}개`);
+            const buffer = await response.arrayBuffer();
+            const decoder = new TextDecoder('euc-kr');
+            const html = decoder.decode(buffer);
 
-        const items = [];
-        for (let i = 0; i < Math.min(names.length, prices.length); i++) {
-            if (names[i] && prices[i]) {
-                items.push({
-                    category: category.name,
-                    name: names[i],
-                    price: prices[i],
-                    updated_at: new Date().toISOString(),
-                });
+            if (html.includes('noResult') || html.includes('Error Message')) {
+                console.log(`${category.name} 페이지${page}: 더 이상 데이터 없음`);
+                break;
             }
-        }
 
-        if (items.length > 0) {
-            const { error } = await supabase.from('parts').upsert(items, { onConflict: 'name' });
-            if (error) console.error('저장 오류:', error);
-            else console.log(`${category.name}: ${items.length}개 저장완료`);
-        } else {
-            console.log(`${category.name}: 저장할 데이터 없음`);
+            const names = [];
+            const prices = [];
+            const nameRegex = /class="prd_info_name prdTxt"[^>]*>([^<]+)</g;
+            const priceRegex = /data-price="([\d,]+)"/g;
+
+            let match;
+            while ((match = nameRegex.exec(html)) !== null) {
+                const name = match[1].trim();
+                if (name) names.push(name);
+            }
+            while ((match = priceRegex.exec(html)) !== null) {
+                prices.push(parseInt(match[1].replace(/,/g, '')));
+            }
+
+            if (names.length === 0) {
+                console.log(`${category.name} 페이지${page}: 파싱 결과 없음`);
+                break;
+            }
+
+            console.log(`${category.name} 페이지${page}: 이름 ${names.length}개, 가격 ${prices.length}개`);
+
+            const items = [];
+            for (let i = 0; i < Math.min(names.length, prices.length); i++) {
+                if (names[i] && prices[i]) {
+                    items.push({
+                        category: category.name,
+                        name: names[i],
+                        price: prices[i],
+                        updated_at: new Date().toISOString(),
+                    });
+                }
+            }
+
+            if (items.length > 0) {
+                const { error } = await supabase.from('parts').upsert(items, { onConflict: 'name' });
+                if (error) {
+                    console.error('저장 오류:', error.message);
+                } else {
+                    totalSaved += items.length;
+                    console.log(`${category.name} 페이지${page}: ${items.length}개 저장 (누적 ${totalSaved}개)`);
+                }
+            }
+
+            page++;
+            await new Promise((r) => setTimeout(r, 1000));
+        } catch (error) {
+            console.error(`${category.name} 페이지${page} 오류:`, error.message);
+            break;
         }
-    } catch (error) {
-        console.error(`${category.name} 오류:`, error.message);
     }
+
+    console.log(`${category.name} 완료: 총 ${totalSaved}개 저장`);
 }
 
 export default async function handler(req, res) {
