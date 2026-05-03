@@ -14,7 +14,7 @@ const CATEGORIES = [
 async function crawlCategory(category) {
     try {
         const params = new URLSearchParams({
-            actype: 'getList',
+            actype: 'getTotalPageCount',
             SelectProductNo: '',
             BigDivNo: '89',
             MediumDivNo: '1126',
