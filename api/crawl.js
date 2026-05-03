@@ -11,78 +11,7 @@ const CATEGORIES = [
     { name: '파워/쿨러', divNo: '2610' },
 ];
 
-const HEADERS = {
-    'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'ko-KR,ko;q=0.9',
-};
-
-function parseCookies(response, existingCookies = {}) {
-    const setCookie = response.headers.get('set-cookie');
-    if (!setCookie) return existingCookies;
-
-    const cookies = { ...existingCookies };
-    setCookie.split(',').forEach((cookie) => {
-        const parts = cookie.trim().split(';')[0].split('=');
-        if (parts.length >= 2) {
-            const key = parts[0].trim();
-            const value = parts.slice(1).join('=').trim();
-            cookies[key] = value;
-        }
-    });
-    return cookies;
-}
-
-function cookiesToString(cookies) {
-    return Object.entries(cookies)
-        .map(([k, v]) => `${k}=${v}`)
-        .join('; ');
-}
-
-async function buildSession() {
-    let cookies = {};
-
-    console.log('1. 메인페이지 접속...');
-    const main = await fetch('https://www.compuzone.co.kr', {
-        headers: HEADERS,
-    });
-    cookies = parseCookies(main, cookies);
-    console.log('메인 쿠키:', Object.keys(cookies).join(', '));
-
-    await new Promise((r) => setTimeout(r, 1000));
-
-    console.log('2. 중고 카테고리 접속...');
-    const used = await fetch('https://www.compuzone.co.kr/product/product_list.htm?BigDivNo=89', {
-        headers: {
-            ...HEADERS,
-            Cookie: cookiesToString(cookies),
-            Referer: 'https://www.compuzone.co.kr',
-        },
-    });
-    cookies = parseCookies(used, cookies);
-    console.log('중고 쿠키:', Object.keys(cookies).join(', '));
-
-    await new Promise((r) => setTimeout(r, 1000));
-
-    console.log('3. CPU 카테고리 접속...');
-    const cpu = await fetch(
-        'https://www.compuzone.co.kr/product/product_list.htm?BigDivNo=89&MediumDivNo=1126&DivNo=2604',
-        {
-            headers: {
-                ...HEADERS,
-                Cookie: cookiesToString(cookies),
-                Referer: 'https://www.compuzone.co.kr/product/product_list.htm?BigDivNo=89',
-            },
-        },
-    );
-    cookies = parseCookies(cpu, cookies);
-    console.log('최종 쿠키:', Object.keys(cookies).join(', '));
-
-    return cookies;
-}
-
-async function crawlCategory(category, cookies) {
+async function crawlCategory(category) {
     try {
         const params = new URLSearchParams({
             actype: 'getList',
@@ -109,12 +38,15 @@ async function crawlCategory(category, cookies) {
         const response = await fetch('https://www.compuzone.co.kr/product/product_list.php', {
             method: 'POST',
             headers: {
-                ...HEADERS,
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 Referer: `https://www.compuzone.co.kr/product/product_list.htm?BigDivNo=89&MediumDivNo=1126&DivNo=${category.divNo}`,
                 'X-Requested-With': 'XMLHttpRequest',
                 Origin: 'https://www.compuzone.co.kr',
-                Cookie: cookiesToString(cookies),
+                Accept: 'text/html, */*; q=0.01',
+                'Accept-Language': 'ko-KR,ko;q=0.9',
+                Cookie: process.env.COMPUZONE_COOKIE || '',
             },
             body: params.toString(),
         });
@@ -122,7 +54,7 @@ async function crawlCategory(category, cookies) {
         const buffer = await response.arrayBuffer();
         const decoder = new TextDecoder('euc-kr');
         const html = decoder.decode(buffer);
-        console.log(`${category.name} HTML 앞부분:`, html.substring(0, 150));
+        console.log(`${category.name} HTML:`, html.substring(0, 150));
 
         const names = [];
         const prices = [];
@@ -156,6 +88,8 @@ async function crawlCategory(category, cookies) {
             const { error } = await supabase.from('parts').upsert(items, { onConflict: 'name' });
             if (error) console.error('저장 오류:', error);
             else console.log(`${category.name}: ${items.length}개 저장완료`);
+        } else {
+            console.log(`${category.name}: 저장할 데이터 없음`);
         }
     } catch (error) {
         console.error(`${category.name} 오류:`, error.message);
@@ -167,13 +101,18 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    console.log('크롤링 시작...');
+    const cookie = process.env.COMPUZONE_COOKIE || '';
+    console.log('쿠키 길이:', cookie.length);
 
-    const cookies = await buildSession();
+    if (!cookie) {
+        return res.status(500).json({ error: '쿠키가 설정되지 않았습니다' });
+    }
+
+    console.log('크롤링 시작...');
     const results = [];
 
     for (const category of CATEGORIES) {
-        await crawlCategory(category, cookies);
+        await crawlCategory(category);
         results.push(category.name);
         await new Promise((r) => setTimeout(r, 2000));
     }
