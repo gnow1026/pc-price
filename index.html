@@ -11,6 +11,12 @@
             <h1>내 PC 얼마일까? 🖥️</h1>
             <p class="subtitle">부품을 선택하면 중고 시세를 알려드려요</p>
 
+            <!-- 면책조항 -->
+            <div class="notice">
+                ⚠️ 본 시세는 컴퓨존 중고 데이터 기반 AI 추정가로, 실제 시세와 차이가 있을 수 있어요. 보유 부품이 목록에
+                없다면 <strong>비슷한 스펙</strong>을 선택해주세요.
+            </div>
+
             <!-- CPU -->
             <div class="section">
                 <div class="section-title">CPU <span class="required">*</span></div>
@@ -82,15 +88,27 @@
 
             <button id="estimate-btn" class="estimate-btn" onclick="estimate()">가격 알아보기</button>
 
+            <!-- 결과 -->
             <div class="result hidden" id="result">
                 <h2>예상 시세</h2>
                 <div id="result-text"></div>
                 <div class="contact">
                     <p>💬 직접 팔고 싶으신가요?</p>
-                    <a href="mailto:your@email.com">수거 문의하기</a>
+                    <button class="contact-btn" onclick="showComingSoon()">수거 문의하기</button>
                 </div>
             </div>
         </div>
+
+        <!-- 팝업 -->
+        <div class="popup-overlay hidden" id="popup-overlay" onclick="hidePopup()">
+            <div class="popup" onclick="event.stopPropagation()">
+                <div class="popup-icon">🚀</div>
+                <h3>준비 중이에요!</h3>
+                <p>수거 문의 서비스는 현재 준비 중이에요.<br />조금만 기다려주시면 곧 찾아올게요!</p>
+                <button class="popup-btn" onclick="hidePopup()">확인</button>
+            </div>
+        </div>
+
         <script src="script.js"></script>
     </body>
 </html>

@@ -213,3 +213,11 @@ async function estimate() {
         btn.textContent = '가격 알아보기';
     }
 }
+
+function showComingSoon() {
+    document.getElementById('popup-overlay').classList.remove('hidden');
+}
+
+function hidePopup() {
+    document.getElementById('popup-overlay').classList.add('hidden');
+}
