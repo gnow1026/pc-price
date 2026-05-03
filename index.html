@@ -13,7 +13,7 @@
 
             <!-- 면책조항 -->
             <div class="notice">
-                ⚠️ 본 시세는 중고 시장 데이터 기반 AI 추정가로, 실제 시세와 차이가 있을 수 있어요. 보유 부품이 목록에
+                ⚠️ 본 시세는 실시간 중고 데이터 기반 AI 추정가로, 실제 시세와 차이가 있을 수 있어요. 보유 부품이 목록에
                 없다면 <strong>비슷한 스펙</strong>을 선택해주세요.
             </div>
 
@@ -60,17 +60,8 @@
             <!-- 저장장치 -->
             <div class="section">
                 <div class="section-title">저장장치 <span class="optional">(선택)</span></div>
-                <div class="btn-group" id="storage-type">
-                    <button class="sel-btn" onclick="selectStorageType('NVMe SSD')">NVMe SSD</button>
-                    <button class="sel-btn" onclick="selectStorageType('SATA SSD')">SATA SSD</button>
-                    <button class="sel-btn" onclick="selectStorageType('HDD')">HDD</button>
-                </div>
-                <div class="btn-group hidden" id="storage-size">
-                    <button class="sel-btn" onclick="selectStorageSize('256GB')">256GB</button>
-                    <button class="sel-btn" onclick="selectStorageSize('512GB')">512GB</button>
-                    <button class="sel-btn" onclick="selectStorageSize('1TB')">1TB</button>
-                    <button class="sel-btn" onclick="selectStorageSize('2TB')">2TB</button>
-                </div>
+                <div id="storage-list"></div>
+                <button class="add-btn" id="add-storage-btn" onclick="addStorage()">+ 저장장치 추가</button>
             </div>
 
             <!-- 제조연도 -->
@@ -99,7 +90,16 @@
             </div>
         </div>
 
-        <!-- 팝업 -->
+        <!-- 로딩 오버레이 -->
+        <div class="overlay hidden" id="loading-overlay">
+            <div class="loading-box">
+                <div class="spinner"></div>
+                <p class="loading-title">AI가 분석 중이에요...</p>
+                <p class="loading-sub">부품 시세를 종합해서 계산하고 있어요</p>
+            </div>
+        </div>
+
+        <!-- 준비중 팝업 -->
         <div class="popup-overlay hidden" id="popup-overlay" onclick="hidePopup()">
             <div class="popup" onclick="event.stopPropagation()">
                 <div class="popup-icon">🚀</div>
