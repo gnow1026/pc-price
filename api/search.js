@@ -2,46 +2,76 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SECRET_KEY);
 
-function cleanName(name) {
-    return (
-        name
-            // 대괄호 태그 제거 [INTEL], [AMD], [중고제품] 등
-            .replace(/\[INTEL\]/gi, '')
-            .replace(/\[AMD\]/gi, '')
-            .replace(/\[삼성전자\]/gi, '')
-            .replace(/\[삼성\]/gi, '')
-            .replace(/\[LG\]/gi, '')
-            // 중고 관련 태그 제거
-            .replace(/\[중고제품\]/gi, '')
-            .replace(/\[중고\]/gi, '')
-            .replace(/\[탈거제품[^\]]*\]/gi, '')
-            .replace(/\[리퍼제품\]/gi, '')
-            .replace(/\[리퍼비시\]/gi, '')
-            // A/S 관련 제거
-            .replace(/\[A\/S\s*\d+개월\]/gi, '')
-            .replace(/\[AS\s*\d+개월\]/gi, '')
-            .replace(/\[A\/S\s*무상\s*\d+개월\]/gi, '')
-            .replace(/A\/S\s*\d+개월/gi, '')
-            .replace(/AS\s*\d+개월/gi, '')
-            // 기타 태그 제거
-            .replace(/\[쿨러미포함\]/gi, '')
-            .replace(/\[쿨러포함\]/gi, '')
-            .replace(/\[벌크\]/gi, '')
-            .replace(/\[정품\]/gi, '')
-            .replace(/\[병행수입\]/gi, '')
-            .replace(/\[대리점정품\]/gi, '')
-            .replace(/\[컴퓨존인증\]/gi, '')
-            // 괄호 안 긴 설명 제거
-            .replace(/\([^)]{15,}\)/g, '')
-            // 특수문자 제거
-            .replace(/[◆★●■▶]/g, '')
-            // 말줄임표 제거
-            .replace(/\.{2,}/g, '')
-            // 연속 공백 정리
-            .replace(/\s+/g, ' ')
-            .trim()
-    );
-}
+const BRAND_KEYWORDS = {
+    인텔: 'i',
+    AMD: '라이젠',
+    엔비디아: 'rtx',
+    SK하이닉스: 'hynix',
+    삼성: '삼성',
+    마이크론: 'crucial',
+    인텔용: 'intel',
+    AMD용: 'amd',
+    'NVMe SSD': 'nvme',
+    'SATA SSD': 'sata',
+    HDD: 'hdd',
+    LG: 'lg',
+    레노버: '레노버',
+    HP: 'hp',
+    Dell: 'dell',
+    ASUS: 'asus',
+    파워서플라이: '파워',
+    쿨러: '쿨러',
+    모니터: '모니터',
+    프린터: '프린터',
+    서버: '서버',
+    네트워크: '네트워크',
+    기타: '',
+};
+
+const SERIES_KEYWORDS = {
+    Ultra: 'ultra',
+    '14세대': 'i.-14',
+    '13세대': 'i.-13',
+    '12세대': 'i.-12',
+    '11세대': 'i.-11',
+    '10세대': 'i.-10',
+    '9세대': 'i.-9',
+    '8세대': 'i.-8',
+    '7세대': 'i.-7',
+    '6세대': 'i.-6',
+    '4세대': 'i.-4',
+    '3세대': 'i.-3',
+    '2세대': 'i.-2',
+    Xeon: 'xeon',
+    셀러론: '셀러론',
+    펜티엄: '펜티엄',
+    라이젠9: '라이젠9',
+    라이젠7: '라이젠7',
+    라이젠5: '라이젠5',
+    라이젠3: '라이젠3',
+    EPYC: 'epyc',
+    'RTX 40': 'rtx 40',
+    'RTX 30': 'rtx 30',
+    'RTX 20': 'rtx 20',
+    'GTX 16': 'gtx 16',
+    'GTX 10': 'gtx 10',
+    'RX 7000': 'rx 7',
+    'RX 6000': 'rx 6',
+    'RX 5000': 'rx 5',
+    DDR5: 'ddr5',
+    DDR4: 'ddr4',
+    DDR3: 'ddr3',
+    Z790: 'z790',
+    Z690: 'z690',
+    B760: 'b760',
+    B660: 'b660',
+    H610: 'h610',
+    X670: 'x670',
+    B650: 'b650',
+    X570: 'x570',
+    B550: 'b550',
+    A520: 'a520',
+};
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -58,25 +88,17 @@ export default async function handler(req, res) {
 
         if (category) query = query.eq('category', category);
 
-        const keywords = [];
-        if (brand) keywords.push(brand);
-        if (series) keywords.push(series);
-        if (keyword) keywords.push(keyword);
+        const brandKeyword = BRAND_KEYWORDS[brand] !== undefined ? BRAND_KEYWORDS[brand] : brand;
+        const seriesKeyword = SERIES_KEYWORDS[series] || series;
 
-        for (const kw of keywords) {
-            query = query.ilike('name', `%${kw}%`);
-        }
+        if (brandKeyword) query = query.ilike('name', `%${brandKeyword}%`);
+        if (seriesKeyword) query = query.ilike('name', `%${seriesKeyword}%`);
+        if (keyword) query = query.ilike('name', `%${keyword}%`);
 
         const { data, error } = await query.limit(100);
         if (error) throw error;
 
-        const results = data.map((item) => ({
-            name: cleanName(item.name),
-            price: item.price,
-            originalName: item.name,
-        }));
-
-        return res.status(200).json({ results });
+        return res.status(200).json({ results: data });
     } catch (error) {
         console.error('검색 오류:', error);
         return res.status(500).json({ error: '검색 중 오류가 발생했습니다' });
