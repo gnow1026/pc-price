@@ -15,135 +15,117 @@ const CATEGORIES = [
 ];
 
 async function crawlCategory(category) {
-    let pageNum = 1;
+    let scrollPage = 1;
     let totalSaved = 0;
-    let hasMore = true;
 
-    while (hasMore) {
-        // 각 pageNum마다 scrollPage 1~6 반복
-        for (let scrollPage = 1; scrollPage <= 6; scrollPage++) {
-            try {
-                const actype = scrollPage === 1 ? 'getList' : 'getPaging';
+    while (true) {
+        try {
+            const params = new URLSearchParams({
+                actype: 'getList',
+                SelectProductNo: '',
+                orderlayerx: '',
+                orderlayery: '',
+                BigDivNo: '89',
+                MediumDivNo: category.mediumDivNo,
+                DivNo: category.divNo,
+                PageCount: '100',
+                StartNum: '0',
+                PageNum: '1',
+                PreOrder: 'sale_order',
+                lvm: 'T',
+                hot_keyword: '',
+                left_menu_open: '',
+                ps_po: 'P',
+                DetailBack: '',
+                CompareProductNoList: '',
+                CompareProductDivNo: '',
+                IsProductGroupView: '',
+                ScrollPage: String(scrollPage),
+                ProductType: 'list',
+                setPricechk: 'N',
+                MD_CopyCategory: 'N',
+                BD_CopyCategory: 'N',
+                OAuthCertChk: '0',
+                PageType: 'ProductList',
+                splist_kw: '',
+                select_page_cnt: '100',
+                BottomQuery: '',
+            });
 
-                const params = new URLSearchParams({
-                    actype,
-                    SelectProductNo: '',
-                    orderlayerx: '',
-                    orderlayery: '',
-                    BigDivNo: '89',
-                    MediumDivNo: category.mediumDivNo,
-                    DivNo: category.divNo,
-                    PageCount: '100',
-                    StartNum: '0',
-                    PageNum: String(pageNum),
-                    PreOrder: 'sale_order',
-                    lvm: 'T',
-                    hot_keyword: '',
-                    left_menu_open: '',
-                    ps_po: 'P',
-                    DetailBack: '',
-                    CompareProductNoList: '',
-                    CompareProductDivNo: '',
-                    IsProductGroupView: '',
-                    ScrollPage: String(scrollPage),
-                    ProductType: 'list',
-                    setPricechk: 'N',
-                    MD_CopyCategory: 'N',
-                    BD_CopyCategory: 'N',
-                    OAuthCertChk: '0',
-                    PageType: 'ProductList',
-                    splist_kw: '',
-                    select_page_cnt: '100',
-                    BottomQuery: '',
-                });
+            const response = await fetch('https://www.compuzone.co.kr/product/product_list.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'User-Agent':
+                        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    Referer: `https://www.compuzone.co.kr/product/product_list.htm?BigDivNo=89&MediumDivNo=${category.mediumDivNo}&DivNo=${category.divNo}`,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    Origin: 'https://www.compuzone.co.kr',
+                    Accept: 'text/html, */*; q=0.01',
+                    'Accept-Language': 'ko-KR,ko;q=0.9',
+                    Cookie: process.env.COMPUZONE_COOKIE || '',
+                },
+                body: params.toString(),
+            });
 
-                const response = await fetch('https://www.compuzone.co.kr/product/product_list.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                        'User-Agent':
-                            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        Referer: `https://www.compuzone.co.kr/product/product_list.htm?BigDivNo=89&MediumDivNo=${category.mediumDivNo}&DivNo=${category.divNo}`,
-                        'X-Requested-With': 'XMLHttpRequest',
-                        Origin: 'https://www.compuzone.co.kr',
-                        Accept: 'text/html, */*; q=0.01',
-                        'Accept-Language': 'ko-KR,ko;q=0.9',
-                        Cookie: process.env.COMPUZONE_COOKIE || '',
-                    },
-                    body: params.toString(),
-                });
+            const buffer = await response.arrayBuffer();
+            const decoder = new TextDecoder('euc-kr');
+            const html = decoder.decode(buffer);
 
-                const buffer = await response.arrayBuffer();
-                const decoder = new TextDecoder('euc-kr');
-                const html = decoder.decode(buffer);
-
-                if (html.includes('noResult') || html.includes('Error Message') || html.trim() === '') {
-                    console.log(`${category.name} 페이지${pageNum}-${scrollPage}: 데이터 없음 → 종료`);
-                    hasMore = false;
-                    break;
-                }
-
-                const names = [];
-                const prices = [];
-                const nameRegex = /class="prd_info_name prdTxt"[^>]*>([^<]+)</g;
-                const priceRegex = /data-price="([\d,]+)"/g;
-
-                let match;
-                while ((match = nameRegex.exec(html)) !== null) {
-                    const name = match[1].trim();
-                    if (name) names.push(name);
-                }
-                while ((match = priceRegex.exec(html)) !== null) {
-                    prices.push(parseInt(match[1].replace(/,/g, '')));
-                }
-
-                if (names.length === 0) {
-                    console.log(`${category.name} 페이지${pageNum}-${scrollPage}: 파싱 결과 없음 → 종료`);
-                    hasMore = false;
-                    break;
-                }
-
-                console.log(`${category.name} 페이지${pageNum}-스크롤${scrollPage}: ${names.length}개`);
-
-                const items = [];
-                const seenNames = new Set();
-                for (let i = 0; i < Math.min(names.length, prices.length); i++) {
-                    if (names[i] && prices[i] && !seenNames.has(names[i])) {
-                        seenNames.add(names[i]);
-                        items.push({
-                            category: category.name,
-                            name: names[i],
-                            price: prices[i],
-                            updated_at: new Date().toISOString(),
-                        });
-                    }
-                }
-
-                if (items.length > 0) {
-                    const { error } = await supabase.from('parts').upsert(items, { onConflict: 'name' });
-                    if (error) {
-                        console.error('저장 오류:', error.message);
-                    } else {
-                        totalSaved += items.length;
-                        console.log(
-                            `${category.name} 페이지${pageNum}-스크롤${scrollPage}: ${items.length}개 저장 (누적 ${totalSaved}개)`,
-                        );
-                    }
-                }
-
-                await new Promise((r) => setTimeout(r, 500));
-            } catch (error) {
-                console.error(`${category.name} 오류:`, error.message);
-                hasMore = false;
+            if (html.includes('noResult') || html.includes('Error Message') || html.trim() === '') {
+                console.log(`${category.name} 스크롤${scrollPage}: 데이터 없음 → 종료`);
                 break;
             }
-        }
 
-        pageNum++;
+            const names = [];
+            const prices = [];
+            const nameRegex = /class="prd_info_name prdTxt"[^>]*>([^<]+)</g;
+            const priceRegex = /data-price="([\d,]+)"/g;
 
-        // 안전장치: 최대 20페이지
-        if (pageNum > 20) {
-            console.log(`${category.name}: 최대 페이지 도달`);
+            let match;
+            while ((match = nameRegex.exec(html)) !== null) {
+                const name = match[1].trim();
+                if (name) names.push(name);
+            }
+            while ((match = priceRegex.exec(html)) !== null) {
+                prices.push(parseInt(match[1].replace(/,/g, '')));
+            }
+
+            if (names.length === 0) {
+                console.log(`${category.name} 스크롤${scrollPage}: 파싱 결과 없음 → 종료`);
+                break;
+            }
+
+            console.log(`${category.name} 스크롤${scrollPage}: ${names.length}개`);
+
+            const items = [];
+            const seenNames = new Set();
+            for (let i = 0; i < Math.min(names.length, prices.length); i++) {
+                if (names[i] && prices[i] && !seenNames.has(names[i])) {
+                    seenNames.add(names[i]);
+                    items.push({
+                        category: category.name,
+                        name: names[i],
+                        price: prices[i],
+                        updated_at: new Date().toISOString(),
+                    });
+                }
+            }
+
+            if (items.length > 0) {
+                const { error } = await supabase.from('parts').upsert(items, { onConflict: 'name' });
+                if (error) {
+                    console.error('저장 오류:', error.message);
+                } else {
+                    totalSaved += items.length;
+                    console.log(`${category.name} 스크롤${scrollPage}: ${items.length}개 저장 (누적 ${totalSaved}개)`);
+                }
+            }
+
+            scrollPage++;
+            await new Promise((r) => setTimeout(r, 500));
+        } catch (error) {
+            console.error(`${category.name} 오류:`, error.message);
             break;
         }
     }
