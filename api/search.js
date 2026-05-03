@@ -73,6 +73,36 @@ const SERIES_KEYWORDS = {
     A520: 'a520',
 };
 
+function cleanName(name) {
+    return (
+        name
+            // 대괄호 내용 제거
+            .replace(/\[[^\]]*\]/g, '')
+            // 괄호 내용 제거
+            .replace(/\([^)]*\)/g, '')
+            // 특수문자 제거
+            .replace(/[◆★●■▶]/g, '')
+            // 세대 표시 제거
+            .replace(/[0-9]+세대\s*/g, '')
+            // 코드명 제거
+            .replace(
+                /\s*(하스웰|커피레이크R?|스카이레이크|카비레이크R?|아이비브릿지|샌디브릿지|랩터레이크R?|엘더레이크|로켓레이크|코멧레이크|애로우레이크|리프레시|리프레쉬)\s*/gi,
+                ' ',
+            )
+            // 불필요한 단어 제거
+            .replace(/중고/gi, '')
+            .replace(/벌크/gi, '')
+            .replace(/정품/gi, '')
+            .replace(/병행수입/gi, '')
+            .replace(/랜덤\s*발송/gi, '')
+            .replace(/랜덤/gi, '')
+            .replace(/탈거/gi, '')
+            // 연속 공백 정리
+            .replace(/\s+/g, ' ')
+            .trim()
+    );
+}
+
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -99,7 +129,7 @@ export default async function handler(req, res) {
         if (error) throw error;
 
         const results = data.map((item) => ({
-            name: item.clean_name || item.name,
+            name: cleanName(item.clean_name || item.name),
             price: item.price,
         }));
 
