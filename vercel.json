@@ -43,6 +43,14 @@
         {
             "src": "/script.js",
             "dest": "/script.js"
+        },
+        {
+            "src": "/api/search",
+            "dest": "/api/search.js"
+        },
+        {
+            "src": "/admin",
+            "dest": "/admin.html"
         }
     ]
 }

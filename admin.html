@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>부품 가격 조회 - 관리자</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                font-family: 'Noto Sans KR', sans-serif;
+                background: #f5f5f5;
+                min-height: 100vh;
+                padding: 20px;
+            }
+            .container {
+                max-width: 900px;
+                margin: 0 auto;
+            }
+            h1 {
+                font-size: 24px;
+                font-weight: 700;
+                color: #1a1a1a;
+                margin-bottom: 24px;
+            }
+            .step {
+                background: white;
+                border-radius: 16px;
+                padding: 24px;
+                margin-bottom: 16px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            }
+            .step-title {
+                font-size: 14px;
+                font-weight: 500;
+                color: #888;
+                margin-bottom: 12px;
+            }
+            .btn-group {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .btn {
+                padding: 10px 18px;
+                border: 1.5px solid #e0e0e0;
+                border-radius: 8px;
+                background: white;
+                font-size: 14px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .btn:hover {
+                border-color: #5b6af0;
+                color: #5b6af0;
+            }
+            .btn.active {
+                background: #5b6af0;
+                color: white;
+                border-color: #5b6af0;
+            }
+            .search-box {
+                display: flex;
+                gap: 8px;
+                margin-top: 8px;
+            }
+            input {
+                flex: 1;
+                padding: 10px 14px;
+                border: 1.5px solid #e0e0e0;
+                border-radius: 8px;
+                font-size: 14px;
+                outline: none;
+            }
+            input:focus {
+                border-color: #5b6af0;
+            }
+            .search-btn {
+                padding: 10px 20px;
+                background: #5b6af0;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 14px;
+                cursor: pointer;
+            }
+            .results {
+                background: white;
+                border-radius: 16px;
+                padding: 24px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            }
+            .result-count {
+                font-size: 14px;
+                color: #888;
+                margin-bottom: 16px;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            th {
+                text-align: left;
+                padding: 10px 12px;
+                font-size: 13px;
+                color: #888;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            td {
+                padding: 12px;
+                font-size: 14px;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            tr:last-child td {
+                border-bottom: none;
+            }
+            tr:hover td {
+                background: #f8f9ff;
+            }
+            .price {
+                font-weight: 600;
+                color: #5b6af0;
+                text-align: right;
+            }
+            .loading {
+                text-align: center;
+                padding: 40px;
+                color: #888;
+            }
+            .hidden {
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🔧 부품 가격 조회</h1>
+
+            <!-- 1단계: 카테고리 -->
+            <div class="step">
+                <div class="step-title">1단계 — 카테고리 선택</div>
+                <div class="btn-group" id="category-group">
+                    <button class="btn" onclick="selectCategory('CPU')">CPU</button>
+                    <button class="btn" onclick="selectCategory('그래픽카드')">그래픽카드</button>
+                    <button class="btn" onclick="selectCategory('메모리')">메모리</button>
+                    <button class="btn" onclick="selectCategory('메인보드')">메인보드</button>
+                    <button class="btn" onclick="selectCategory('HDD/SSD')">HDD/SSD</button>
+                    <button class="btn" onclick="selectCategory('파워/쿨러')">파워/쿨러</button>
+                    <button class="btn" onclick="selectCategory('노트북')">노트북</button>
+                    <button class="btn" onclick="selectCategory('모니터/프린터')">모니터/프린터</button>
+                    <button class="btn" onclick="selectCategory('서버/네트워크')">서버/네트워크</button>
+                </div>
+            </div>
+
+            <!-- 2단계: 브랜드 -->
+            <div class="step hidden" id="step-brand">
+                <div class="step-title">2단계 — 브랜드 선택</div>
+                <div class="btn-group" id="brand-group"></div>
+            </div>
+
+            <!-- 3단계: 세부 시리즈 -->
+            <div class="step hidden" id="step-series">
+                <div class="step-title">3단계 — 시리즈 선택</div>
+                <div class="btn-group" id="series-group"></div>
+            </div>
+
+            <!-- 4단계: 검색 -->
+            <div class="step hidden" id="step-search">
+                <div class="step-title">4단계 — 모델명 검색 (선택)</div>
+                <div class="search-box">
+                    <input
+                        type="text"
+                        id="keyword-input"
+                        placeholder="예: 12400, 3060, 16GB..."
+                        onkeydown="if (event.key === 'Enter') search();"
+                    />
+                    <button class="search-btn" onclick="search()">검색</button>
+                </div>
+            </div>
+
+            <!-- 결과 -->
+            <div class="results hidden" id="results">
+                <div class="result-count" id="result-count"></div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>부품명</th>
+                            <th style="text-align: right">가격</th>
+                        </tr>
+                    </thead>
+                    <tbody id="result-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            const BRANDS = {
+                CPU: ['인텔', 'AMD'],
+                그래픽카드: ['엔비디아', 'AMD', '기타'],
+                메모리: ['삼성', 'SK하이닉스', '마이크론', '기타'],
+                메인보드: ['인텔용', 'AMD용'],
+                'HDD/SSD': ['NVMe SSD', 'SATA SSD', 'HDD'],
+                '파워/쿨러': ['파워서플라이', '쿨러'],
+                노트북: ['삼성', 'LG', '레노버', 'HP', 'Dell', 'ASUS'],
+                '모니터/프린터': ['모니터', '프린터'],
+                '서버/네트워크': ['서버', '네트워크'],
+            };
+
+            const SERIES = {
+                'CPU-인텔': [
+                    'Ultra',
+                    '14세대',
+                    '13세대',
+                    '12세대',
+                    '11세대',
+                    '10세대',
+                    '9세대',
+                    '8세대',
+                    '7세대',
+                    '6세대',
+                    '4세대',
+                    '3세대',
+                    '2세대',
+                    'Xeon',
+                    '셀러론',
+                    '펜티엄',
+                ],
+                'CPU-AMD': ['라이젠9', '라이젠7', '라이젠5', '라이젠3', 'EPYC'],
+                '그래픽카드-엔비디아': ['RTX 40', 'RTX 30', 'RTX 20', 'GTX 16', 'GTX 10'],
+                '그래픽카드-AMD': ['RX 7000', 'RX 6000', 'RX 5000'],
+                '메모리-삼성': ['DDR5', 'DDR4', 'DDR3'],
+                '메모리-SK하이닉스': ['DDR5', 'DDR4', 'DDR3'],
+                '메모리-마이크론': ['DDR5', 'DDR4', 'DDR3'],
+                '메모리-기타': ['DDR5', 'DDR4', 'DDR3'],
+                '메인보드-인텔용': ['Z790', 'Z690', 'B760', 'B660', 'H610'],
+                '메인보드-AMD용': ['X670', 'B650', 'X570', 'B550', 'A520'],
+                'HDD/SSD-NVMe SSD': ['삼성', 'SK하이닉스', 'WD', '기타'],
+                'HDD/SSD-SATA SSD': ['삼성', '기타'],
+                'HDD/SSD-HDD': ['1TB 이하', '2TB', '4TB 이상'],
+            };
+
+            const BRAND_KEYWORDS = {
+                인텔: 'intel',
+                AMD: 'amd',
+                엔비디아: 'rtx',
+                SK하이닉스: 'sk',
+                삼성: '삼성',
+                마이크론: '마이크론',
+                인텔용: 'intel',
+                AMD용: 'amd',
+                'NVMe SSD': 'nvme',
+                'SATA SSD': 'sata',
+                HDD: 'hdd',
+                LG: 'lg',
+                레노버: '레노버',
+                HP: 'hp',
+                Dell: 'dell',
+                ASUS: 'asus',
+                파워서플라이: '파워',
+                쿨러: '쿨러',
+                모니터: '모니터',
+                프린터: '프린터',
+                서버: '서버',
+                네트워크: '네트워크',
+            };
+
+            let selectedCategory = '';
+            let selectedBrand = '';
+            let selectedSeries = '';
+
+            function selectCategory(cat) {
+                selectedCategory = cat;
+                selectedBrand = '';
+                selectedSeries = '';
+
+                document.querySelectorAll('#category-group .btn').forEach((b) => b.classList.remove('active'));
+                event.target.classList.add('active');
+
+                const brands = BRANDS[cat] || [];
+                const brandGroup = document.getElementById('brand-group');
+                brandGroup.innerHTML = brands
+                    .map((b) => `<button class="btn" onclick="selectBrand('${b}')">${b}</button>`)
+                    .join('');
+
+                document.getElementById('step-brand').classList.remove('hidden');
+                document.getElementById('step-series').classList.add('hidden');
+                document.getElementById('step-search').classList.remove('hidden');
+                document.getElementById('results').classList.add('hidden');
+
+                search();
+            }
+
+            function selectBrand(brand) {
+                selectedBrand = brand;
+                selectedSeries = '';
+
+                document.querySelectorAll('#brand-group .btn').forEach((b) => b.classList.remove('active'));
+                event.target.classList.add('active');
+
+                const key = `${selectedCategory}-${brand}`;
+                const seriesList = SERIES[key] || [];
+                const seriesGroup = document.getElementById('series-group');
+
+                if (seriesList.length > 0) {
+                    seriesGroup.innerHTML = seriesList
+                        .map((s) => `<button class="btn" onclick="selectSeries('${s}')">${s}</button>`)
+                        .join('');
+                    document.getElementById('step-series').classList.remove('hidden');
+                } else {
+                    document.getElementById('step-series').classList.add('hidden');
+                }
+
+                search();
+            }
+
+            function selectSeries(series) {
+                selectedSeries = series;
+
+                document.querySelectorAll('#series-group .btn').forEach((b) => b.classList.remove('active'));
+                event.target.classList.add('active');
+
+                search();
+            }
+
+            async function search() {
+                if (!selectedCategory) return;
+
+                const keyword = document.getElementById('keyword-input').value;
+                const brandKeyword = BRAND_KEYWORDS[selectedBrand] || selectedBrand;
+
+                document.getElementById('results').classList.remove('hidden');
+                document.getElementById('result-body').innerHTML =
+                    '<tr><td colspan="2" class="loading">검색 중...</td></tr>';
+
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        category: selectedCategory,
+                        brand: brandKeyword,
+                        series: selectedSeries,
+                        keyword: keyword,
+                    }),
+                });
+
+                const data = await response.json();
+                const results = data.results || [];
+
+                document.getElementById('result-count').textContent = `총 ${results.length}개 검색됨`;
+
+                if (results.length === 0) {
+                    document.getElementById('result-body').innerHTML =
+                        '<tr><td colspan="2" style="text-align:center;padding:40px;color:#888">검색 결과가 없습니다</td></tr>';
+                    return;
+                }
+
+                document.getElementById('result-body').innerHTML = results
+                    .map(
+                        (r) => `
+        <tr>
+          <td>${r.name}</td>
+          <td class="price">${r.price.toLocaleString()}원</td>
+        </tr>
+      `,
+                    )
+                    .join('');
+            }
+        </script>
+    </body>
+</html>
