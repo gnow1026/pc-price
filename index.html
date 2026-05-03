@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
     <head>
         <meta charset="UTF-8" />
@@ -9,34 +9,80 @@
     <body>
         <div class="container">
             <h1>내 PC 얼마일까? 🖥️</h1>
-            <p class="subtitle">스펙을 입력하면 중고 시세를 알려드려요</p>
+            <p class="subtitle">부품을 선택하면 중고 시세를 알려드려요</p>
 
-            <div class="form">
-                <div class="input-group">
-                    <label>CPU 모델명</label>
-                    <input type="text" id="cpu" placeholder="예: i5-10400, 라이젠5 5600" />
+            <!-- CPU -->
+            <div class="section">
+                <div class="section-title">CPU <span class="required">*</span></div>
+                <div class="btn-group" id="cpu-brand">
+                    <button class="sel-btn" onclick="selectCpuBrand('인텔')">인텔</button>
+                    <button class="sel-btn" onclick="selectCpuBrand('AMD')">AMD</button>
                 </div>
-                <div class="input-group">
-                    <label>RAM 용량</label>
-                    <input type="text" id="ram" placeholder="예: 16GB, 8GB" />
-                </div>
-                <div class="input-group">
-                    <label>GPU 모델명</label>
-                    <input type="text" id="gpu" placeholder="예: RTX 3060, GTX 1660 (없으면 내장그래픽)" />
-                </div>
-                <div class="input-group">
-                    <label>저장장치</label>
-                    <input type="text" id="storage" placeholder="예: SSD 512GB, HDD 1TB" />
-                </div>
-                <div class="input-group">
-                    <label>제조연도</label>
-                    <input type="text" id="year" placeholder="예: 2020년" />
-                </div>
-
-                <button id="btn" onclick="estimate()">가격 알아보기</button>
+                <div class="btn-group hidden" id="cpu-series"></div>
+                <div class="btn-group hidden" id="cpu-model"></div>
             </div>
 
-            <div class="result" id="result" style="display: none">
+            <!-- RAM -->
+            <div class="section">
+                <div class="section-title">RAM <span class="required">*</span></div>
+                <div class="btn-group" id="ram-type">
+                    <button class="sel-btn" onclick="selectRamType('DDR3')">DDR3</button>
+                    <button class="sel-btn" onclick="selectRamType('DDR4')">DDR4</button>
+                    <button class="sel-btn" onclick="selectRamType('DDR5')">DDR5</button>
+                </div>
+                <div class="btn-group hidden" id="ram-size">
+                    <button class="sel-btn" onclick="selectRamSize('4GB')">4GB</button>
+                    <button class="sel-btn" onclick="selectRamSize('8GB')">8GB</button>
+                    <button class="sel-btn" onclick="selectRamSize('16GB')">16GB</button>
+                    <button class="sel-btn" onclick="selectRamSize('32GB')">32GB</button>
+                    <button class="sel-btn" onclick="selectRamSize('64GB')">64GB</button>
+                </div>
+            </div>
+
+            <!-- GPU -->
+            <div class="section">
+                <div class="section-title">GPU <span class="optional">(선택)</span></div>
+                <div class="btn-group" id="gpu-brand">
+                    <button class="sel-btn" onclick="selectGpuBrand('엔비디아')">엔비디아</button>
+                    <button class="sel-btn" onclick="selectGpuBrand('AMD')">AMD</button>
+                    <button class="sel-btn" onclick="selectGpuBrand('없음')">내장그래픽</button>
+                </div>
+                <div class="btn-group hidden" id="gpu-series"></div>
+                <div class="btn-group hidden" id="gpu-model"></div>
+            </div>
+
+            <!-- 저장장치 -->
+            <div class="section">
+                <div class="section-title">저장장치 <span class="optional">(선택)</span></div>
+                <div class="btn-group" id="storage-type">
+                    <button class="sel-btn" onclick="selectStorageType('NVMe SSD')">NVMe SSD</button>
+                    <button class="sel-btn" onclick="selectStorageType('SATA SSD')">SATA SSD</button>
+                    <button class="sel-btn" onclick="selectStorageType('HDD')">HDD</button>
+                </div>
+                <div class="btn-group hidden" id="storage-size">
+                    <button class="sel-btn" onclick="selectStorageSize('256GB')">256GB</button>
+                    <button class="sel-btn" onclick="selectStorageSize('512GB')">512GB</button>
+                    <button class="sel-btn" onclick="selectStorageSize('1TB')">1TB</button>
+                    <button class="sel-btn" onclick="selectStorageSize('2TB')">2TB</button>
+                </div>
+            </div>
+
+            <!-- 제조연도 -->
+            <div class="section">
+                <div class="section-title">제조연도 <span class="optional">(선택)</span></div>
+                <div class="btn-group" id="year-group">
+                    <button class="sel-btn" onclick="selectYear('2024')">2024</button>
+                    <button class="sel-btn" onclick="selectYear('2023')">2023</button>
+                    <button class="sel-btn" onclick="selectYear('2022')">2022</button>
+                    <button class="sel-btn" onclick="selectYear('2021')">2021</button>
+                    <button class="sel-btn" onclick="selectYear('2020')">2020</button>
+                    <button class="sel-btn" onclick="selectYear('2019 이전')">2019 이전</button>
+                </div>
+            </div>
+
+            <button id="estimate-btn" class="estimate-btn" onclick="estimate()">가격 알아보기</button>
+
+            <div class="result hidden" id="result">
                 <h2>예상 시세</h2>
                 <div id="result-text"></div>
                 <div class="contact">
