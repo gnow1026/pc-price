@@ -54,8 +54,8 @@ async function crawlCategory(category) {
         console.log('HTML 앞부분:', html.substring(0, 500));
 
         const items = [];
-        const nameRegex = /class="prd_info_name[^"]*"[^>]*>[\s\S]*?<a[^>]*>([^<]+)<\/a>/g;
-        const priceRegex = /data-price="(\d+)"/g;
+        const nameRegex = /class="prd_info_name prdTxt"[^>]*>([^<]+)</g;
+        const priceRegex = /data-price="([\d,]+)"/g;
 
         const names = [];
         const prices = [];
@@ -66,7 +66,7 @@ async function crawlCategory(category) {
             if (name) names.push(name);
         }
         while ((match = priceRegex.exec(html)) !== null) {
-            prices.push(parseInt(match[1]));
+            prices.push(parseInt(match[1].replace(/,/g, '')));
         }
 
         console.log(`${category.name}: 이름 ${names.length}개, 가격 ${prices.length}개 파싱됨`);
