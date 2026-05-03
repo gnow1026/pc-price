@@ -106,14 +106,14 @@ async function crawlCategory(category) {
     }
 }
 
-const ipCheck = await fetch('https://api.ipify.org?format=json');
-const ipData = await ipCheck.json();
-console.log('Vercel 서버 IP:', ipData.ip);
-
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
+
+    const ipCheck = await fetch('https://api.ipify.org?format=json');
+    const ipData = await ipCheck.json();
+    console.log('Vercel 서버 IP:', ipData.ip);
 
     const cookie = process.env.COMPUZONE_COOKIE || '';
     console.log('쿠키 길이:', cookie.length);
