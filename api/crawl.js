@@ -50,7 +50,7 @@ async function crawlCategory(category) {
             },
             body: params.toString(),
         });
-
+        console.log(`${category.name} 상태코드:`, response.status, response.headers.get('content-type'));
         const buffer = await response.arrayBuffer();
         const decoder = new TextDecoder('euc-kr');
         const html = decoder.decode(buffer);
