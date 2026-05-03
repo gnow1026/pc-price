@@ -34,8 +34,8 @@ async function crawlCategory(category) {
         const items = [];
 
         // 상품명 패턴
-        const nameRegex = /class="prd_name"[^>]*>\s*<a[^>]*>([^<]+)<\/a>/g;
-        const priceRegex = /class="prd_price"[^>]*>[\s\S]*?([\d,]+)원/g;
+        const nameRegex = /class="prd_info_name[^"]*"[^>]*>([^<]+)</g;
+        const priceRegex = /data-price="(\d+)"/g;
 
         const names = [];
         const prices = [];
